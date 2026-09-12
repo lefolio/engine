@@ -43,7 +43,7 @@ npm run dev
 Swap to a released version before publishing the site:
 
 ```json
-"@lefolio/engine": "0.1.9"
+"@lefolio/engine": "0.2.0"
 ```
 
 Requires Next.js 16 (bundled). Production builds default to `--webpack` for static-export reliability; pass `--turbopack` to opt in.
