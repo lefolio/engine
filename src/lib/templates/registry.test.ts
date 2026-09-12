@@ -15,15 +15,6 @@ jest.mock('@/templates/academic', () => ({
     loadStyles: async () => undefined,
   },
 }));
-jest.mock('@/templates/showcase', () => ({
-  showcaseTemplate: {
-    id: 'showcase',
-    routing: 'multipage',
-    Shell: () => null,
-    loadStyles: async () => undefined,
-    Home: () => null,
-  },
-}));
 jest.mock('@/templates/treasure', () => ({
   treasureTemplate: {
     id: 'treasure',
@@ -38,6 +29,7 @@ jest.mock('@/templates/portfolio', () => ({
     routing: 'multipage',
     Shell: () => null,
     loadStyles: async () => undefined,
+    Home: () => null,
   },
 }));
 
@@ -56,18 +48,18 @@ describe('templates/registry', () => {
 
   it('resolveTemplateId prefers manifest.template then config then academic', async () => {
     const { resolveTemplateId } = await import('./registry');
-    expect(resolveTemplateId({ template: 'showcase' })).toBe('showcase');
-    expect(resolveTemplateId({ config: { template: 'portfolio' } })).toBe('portfolio');
+    expect(resolveTemplateId({ template: 'portfolio' })).toBe('portfolio');
+    expect(resolveTemplateId({ config: { template: 'treasure' } })).toBe('treasure');
     expect(resolveTemplateId({})).toBe('academic');
   });
 
   it('getTemplate returns the requested template with defaults filled', async () => {
     const { getTemplate } = await import('./registry');
-    const showcase = getTemplate('showcase');
-    expect(showcase.id).toBe('showcase');
-    expect(typeof showcase.Home).toBe('function');
-    expect(typeof showcase.SectionIndex).toBe('function');
-    expect(typeof showcase.ContentPage).toBe('function');
+    const portfolio = getTemplate('portfolio');
+    expect(portfolio.id).toBe('portfolio');
+    expect(typeof portfolio.Home).toBe('function');
+    expect(typeof portfolio.SectionIndex).toBe('function');
+    expect(typeof portfolio.ContentPage).toBe('function');
   });
 
   it('getTemplate falls back to academic for unknown ids', async () => {

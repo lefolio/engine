@@ -6,7 +6,6 @@ import {
   DefaultStandalonePage,
 } from './defaults';
 import { academicTemplate } from '@/templates/academic';
-import { showcaseTemplate } from '@/templates/showcase';
 import { treasureTemplate } from '@/templates/treasure';
 import { portfolioTemplate } from '@/templates/portfolio';
 import { collectLocalTemplates } from './collect-local';
@@ -14,7 +13,6 @@ import * as localTemplateEntry from 'lefolio-active-template';
 
 const builtins: Record<string, TemplateModule> = {
   academic: academicTemplate,
-  showcase: showcaseTemplate,
   treasure: treasureTemplate,
   portfolio: portfolioTemplate,
 };

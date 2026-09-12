@@ -101,7 +101,7 @@ function resolveRunRoot() {
     return ENGINE_ROOT;
   }
 
-  // Consumer sites always get an isolated cache dir — including `file:../lefolio.md`
+  // Consumer sites always get an isolated cache dir — including `file:../lefolio`
   // links, which are NOT under node_modules but must not share the engine's `.next`
   // (otherwise basePath from one site sticks on another).
   const pkg = JSON.parse(fs.readFileSync(path.join(ENGINE_ROOT, 'package.json'), 'utf8'));

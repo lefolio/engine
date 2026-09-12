@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lefolio/lefolio.md.git"
+    "url": "git+https://github.com/lefolio/engine.git"
   },
-  "homepage": "https://lefolio.md",
+  "homepage": "https://github.com/lefolio/engine#readme",
   "bugs": {
-    "url": "https://github.com/lefolio/lefolio.md/issues"
+    "url": "https://github.com/lefolio/engine/issues"
   },
   "keywords": [
     "lefolio",

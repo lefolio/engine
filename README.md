@@ -1,62 +1,55 @@
-# lefolio.md / `@lefolio/engine`
+# `@lefolio/engine`
 
-Marketing site for **[LeFolio](https://lefolio.md)** and the publishable **engine** package — static sites from an Obsidian vault.
+Publish a static site from an Obsidian vault — CLI `lefolio` + Next.js runtime + built-in templates.
 
-## Dual role
-
-| Role | What |
-|------|------|
-| **Website** | This repo’s `Content/` + GitHub Pages deploy → https://lefolio.md |
-| **npm package** | `@lefolio/engine` — CLI `lefolio` + Next runtime + built-in templates |
-
-Consumers keep their own `Content/`; they do not fork this repo to publish a site. See [PACKAGING.md](./PACKAGING.md).
+The marketing site lives in **[lefolio/lefolio.md](https://github.com/lefolio/lefolio.md)** (`https://lefolio.md`).
 
 ## Structure
 
 ```text
-lefolio.md/
-├── Content/             # this site’s vault (not published to npm)
+lefolio/
 ├── scripts/             # lefolio CLI, sync, watch
-├── src/                 # Next app + templates (academic, showcase, …)
+├── src/                 # Next app + built-in templates (academic, portfolio, treasure)
 ├── package.json         # name: @lefolio/engine
-└── .github/workflows/   # GitHub Pages deploy
+└── PACKAGING.md         # npm publish notes
 ```
 
-## Preview this site locally
+## Use with a site vault
 
 ```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000/](http://localhost:3000/).
-
-## Use the engine with other content
-
-```bash
-npx lefolio dev --content /path/to/YourContent
-# or from a thin site with Content/ in cwd:
-npm install @lefolio/engine   # or file:../lefolio.md while developing
+# from a thin site with Content/ in cwd:
+npm install @lefolio/engine   # or file:../lefolio while developing
 npx lefolio dev
 ```
 
-## Template (this site)
-
-```yaml
-template: showcase
-theme:
-  preset: ink
-  mode: light
+```json
+{
+  "dependencies": {
+    "@lefolio/engine": "file:../lefolio"
+  },
+  "scripts": {
+    "dev": "lefolio dev",
+    "build": "lefolio build"
+  }
+}
 ```
 
-## Deploy (website)
+Site-local templates: if `<cwd>/src/index.ts` exports `TemplateModule`(s), they are registered. Select with `Content/config.yaml` `template: <id>`.
 
-Push to `main` — [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds and deploys `out/` to GitHub Pages.
+## Develop the engine
+
+```bash
+npm install
+npm test
+npm run pack:dry
+```
+
+See [PACKAGING.md](./PACKAGING.md).
 
 ## Links
 
 - Site: https://lefolio.md
-- Package: `@lefolio/engine` (see PACKAGING.md)
+- Package: `@lefolio/engine`
 - Org: https://github.com/lefolio
 
 ## License
