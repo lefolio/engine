@@ -3,6 +3,7 @@
  * Import from `@lefolio/engine/template`.
  */
 export type {
+  ColorScheme,
   TemplateModule,
   ResolvedTemplateModule,
   TemplateShellProps,

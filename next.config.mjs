@@ -3,10 +3,12 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { fileURLToPath } from 'url';
 import { resolveContentDir, readEngineMeta } from './scripts/resolve-paths.mjs';
+import { BUILTIN_TEMPLATES, resolveTemplateId } from './scripts/resolve-template.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(__dirname, 'src');
 const stubTemplate = path.join(srcDir, 'lib/templates/no-external.ts');
+const stubBuiltin = path.join(srcDir, 'lib/templates/no-builtin.ts');
 
 function normalizeBasePath(value) {
   if (!value || value === '/') return '';
@@ -40,13 +42,37 @@ function resolveExternalTemplateEntry() {
   return null;
 }
 
+function readTemplateId() {
+  const meta = readEngineMeta();
+  if (meta?.template) return meta.template;
+  try {
+    const config = yaml.load(fs.readFileSync(path.join(resolveContentDir(), 'config.yaml'), 'utf8'));
+    return resolveTemplateId(config);
+  } catch {
+    return resolveTemplateId(null);
+  }
+}
+
+/**
+ * Only the selected built-in is bundled, so other templates' CSS never ships.
+ * A site-local template gets the stub; an unknown id without one falls back to academic.
+ */
+function resolveBuiltinTemplateEntry(templateId, hasExternal) {
+  if (BUILTIN_TEMPLATES.includes(templateId)) {
+    return path.join(srcDir, 'templates', templateId, 'index.ts');
+  }
+  return hasExternal ? stubBuiltin : path.join(srcDir, 'templates', 'academic', 'index.ts');
+}
+
 const basePath = readBasePath();
 const externalTemplateEntry = resolveExternalTemplateEntry();
 const activeTemplate = externalTemplateEntry || stubTemplate;
+const builtinTemplate = resolveBuiltinTemplateEntry(readTemplateId(), Boolean(externalTemplateEntry));
 
 const packageAliases = {
   '@': srcDir,
   'lefolio-active-template': activeTemplate,
+  'lefolio-builtin-template': builtinTemplate,
   '@lefolio/engine/template': path.join(srcDir, 'lib/templates/public.ts'),
   '@lefolio/engine/markdown': path.join(srcDir, 'components/markdown-public.ts'),
   '@lefolio/engine/parse': path.join(srcDir, 'lib/markdown/parse/index.ts'),

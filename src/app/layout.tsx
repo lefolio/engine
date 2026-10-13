@@ -3,11 +3,10 @@ import './globals.css';
 import GoogleAnalytics, {
   normalizeGoogleAnalyticsId,
 } from '@/components/GoogleAnalytics';
+import { DocumentLang } from '@/components/DocumentLang';
 import { loadManifest } from '@/lib/content/load-manifest';
 import { CONTENT_VERSION } from '@/lib/content/content-version';
 import { getTemplate, resolveTemplateId } from '@/lib/templates/registry';
-import { themeOverrideStyle } from '@/lib/theme/resolve-theme';
-import { ThemeProvider } from '@/components/ThemeProvider';
 import { MarkdownComponentsProvider } from '@/components/markdown/MarkdownComponentsProvider';
 
 export function generateMetadata(): Metadata {
@@ -31,25 +30,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { Shell } = template;
   await template.loadStyles();
 
-  const themeId = manifest.theme;
-  const themeStyle = themeOverrideStyle(manifest.config.theme);
+  const colorScheme = template.colorScheme ?? 'light';
   const googleAnalyticsId = normalizeGoogleAnalyticsId(manifest.config.analytics?.google);
 
   return (
     <html
-      lang="en"
+      lang={manifest.lang}
       data-template={templateId}
-      data-theme={themeId}
-      style={themeStyle}
+      data-scroll-behavior="smooth"
+      style={{ colorScheme }}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
         {googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
-        <ThemeProvider themeId={themeId}>
-          <MarkdownComponentsProvider components={template.markdownComponents}>
-            <Shell manifest={manifest}>{children}</Shell>
-          </MarkdownComponentsProvider>
-        </ThemeProvider>
+        <DocumentLang fallback={manifest.lang} routeLangs={manifest.routeLangs} />
+        <MarkdownComponentsProvider
+          components={template.markdownComponents}
+          colorScheme={colorScheme}
+        >
+          <Shell manifest={manifest}>{children}</Shell>
+        </MarkdownComponentsProvider>
       </body>
     </html>
   );

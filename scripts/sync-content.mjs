@@ -12,7 +12,7 @@ import {
   ENGINE_META_PATH,
   resolveVaultRoot,
 } from './resolve-paths.mjs';
-import { resolveTemplateId, resolveThemeId } from './resolve-theme.mjs';
+import { resolveTemplateId } from './resolve-template.mjs';
 import {
   buildVaultIndex,
   resolveAsset,
@@ -273,6 +273,16 @@ function parseLinkTarget(value) {
 
 const ALIGN_VALUES = new Set(['left', 'right', 'center']);
 
+function frontmatterLang(frontmatter) {
+  const value = frontmatter?.lang;
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function resolveSiteLang(config) {
+  const value = config.site?.lang;
+  return typeof value === 'string' && value.trim() ? value.trim() : 'en';
+}
+
 function normalizeBasePath(value) {
   if (!value || value === '/') return '';
   return String(value).replace(/\/$/, '');
@@ -347,10 +357,10 @@ function preprocessMarkdown(
       const publicPath = copyAssetFromVault(vaultPath, vaultRoot, ASSETS_OUT, assetMap) || '';
       const prefix = basePath || '';
       const src = `${prefix}${publicPath}`;
-      const alt = path.basename(vaultPath, path.extname(vaultPath)).replace(/[_-]/g, ' ');
+      const alt = alias ?? path.basename(vaultPath, path.extname(vaultPath)).replace(/[_-]/g, ' ');
 
       if (!width && !align && !wrap) {
-        return `\n\n![${alt}](${src})\n\n`;
+        return `\n\n![${alt.replace(/[[\]\\]/g, '\\$&')}](${src})\n\n`;
       }
 
       const figureClasses = ['content-figure'];
@@ -360,7 +370,7 @@ function preprocessMarkdown(
       const figureStyle = width ? ` style="max-width:${width}px"` : '';
       const imgWidthAttr = width ? ` width="${width}"` : '';
 
-      return `\n\n<figure class="${figureClasses.join(' ')}"${figureStyle}><img src="${src}" alt="${alt}"${imgWidthAttr} loading="lazy" /></figure>\n\n`;
+      return `\n\n<figure class="${figureClasses.join(' ')}"${figureStyle}><img src="${src}" alt="${escapeHtmlAttr(alt)}"${imgWidthAttr} loading="lazy" /></figure>\n\n`;
     }
 
     if (isAudioPath(vaultPath)) {
@@ -488,6 +498,13 @@ function scanPages(config, vaultRoot) {
     ...(standaloneHomePage ? [standaloneHomePage] : []),
   ];
   const pagesByPath = new Map(allContentPages.map((p) => [p.relativePath, p]));
+  const siteLang = resolveSiteLang(config);
+  const langOf = (page) => {
+    const own = frontmatterLang(page.frontmatter);
+    if (own) return own;
+    const sectionNote = page.section ? sectionIndexNotes.get(page.section) : null;
+    return frontmatterLang(sectionNote?.frontmatter) || siteLang;
+  };
   const vaultIndex = buildVaultIndex(vaultRoot);
   const assetMap = {};
   const basePath = normalizeBasePath(config.site?.basePath);
@@ -588,6 +605,15 @@ function scanPages(config, vaultRoot) {
   const homePage =
     pages.find((p) => p.relativePath === homePath) ?? processedStandaloneHomePage;
 
+  const routeLangs = { '/': homePage ? langOf(homePage) : siteLang };
+  for (const name of sections) {
+    const note = sectionIndexNotes.get(name);
+    routeLangs[`/${toSectionSlug(name)}/`] = note ? langOf(note) : siteLang;
+  }
+  for (const page of [...pages, ...processedStandalonePages]) {
+    routeLangs[pageRoute(page, homePath)] = langOf(page);
+  }
+
   const navSections = sections.map((name) => {
     const indexNote = processedSectionIndexes.get(name) || null;
     const sortMode = indexNote?.frontmatter?.sort || 'date';
@@ -605,6 +631,7 @@ function scanPages(config, vaultRoot) {
         ? {
             relativePath: indexNote.relativePath,
             title: indexNote.title,
+            lang: langOf(indexNote),
             frontmatter: indexNote.frontmatter,
             processedBody: indexNote.processedBody,
           }
@@ -639,6 +666,8 @@ function scanPages(config, vaultRoot) {
       segment: rawSegment,
       sectionSlug: toSectionSlug(rawSegment),
       title: page.title,
+      lang: langOf(page),
+      frontmatter: page.frontmatter,
       processedBody: page.processedBody,
       href: pageRoute(page, homePath),
     };
@@ -647,13 +676,16 @@ function scanPages(config, vaultRoot) {
   return {
     generatedAt: new Date().toISOString(),
     template: resolveTemplateId(config),
-    theme: resolveThemeId(config),
     config,
     basePath,
+    lang: siteLang,
+    routeLangs,
     home: homePage
       ? {
           relativePath: homePage.relativePath,
           title: homePage.title,
+          lang: langOf(homePage),
+          frontmatter: homePage.frontmatter,
           processedBody: homePage.processedBody,
           heroImage: (() => {
             const raw = homePage.frontmatter?.hero_image;
@@ -678,6 +710,7 @@ function scanPages(config, vaultRoot) {
       sectionSlug: toSectionSlug(page.section),
       slug: page.slug,
       title: page.title,
+      lang: langOf(page),
       frontmatter: page.frontmatter,
       processedBody: page.processedBody,
       href: pageRoute(page, homePath),
@@ -741,7 +774,6 @@ function main() {
   const vaultRoot = resolveVaultRoot(CONTENT_DIR, config);
   const manifest = scanPages(config, vaultRoot);
   const template = resolveTemplateId(config);
-  const theme = resolveThemeId(config);
 
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
@@ -754,7 +786,6 @@ function main() {
         vaultRoot,
         basePath: manifest.basePath,
         template,
-        theme,
       },
       null,
       2

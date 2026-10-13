@@ -170,6 +170,25 @@ function runNext(runRoot, nextArgs, env) {
   return run(process.execPath, [nextBin, ...nextArgs], { cwd: runRoot, env });
 }
 
+/**
+ * The root layout renders the site default `lang`; set each exported page's
+ * `<html lang>` from the manifest's per-route languages.
+ */
+function applyRouteLangs(runRoot) {
+  const manifestPath = path.join(runRoot, '.content', 'manifest.json');
+  const outDir = path.join(runRoot, 'out');
+  if (!fs.existsSync(manifestPath) || !fs.existsSync(outDir)) return;
+
+  const { lang: fallback, routeLangs = {} } = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  for (const [route, lang] of Object.entries(routeLangs)) {
+    if (lang === fallback) continue;
+    const file = path.join(outDir, ...route.split('/').filter(Boolean), 'index.html');
+    if (!fs.existsSync(file)) continue;
+    const html = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, html.replace(/<html([^>]*?)\slang="[^"]*"/, `<html$1 lang="${lang}"`));
+  }
+}
+
 /** When the CLI is invoked from a consumer site, mirror `out/` into cwd. */
 function copyOutToCwd(runRoot) {
   const cwd = path.resolve(process.cwd());
@@ -242,6 +261,7 @@ Examples:
     case 'build':
       await run('node', ['scripts/sync-content.mjs', ...contentFlag], { cwd: runRoot, env });
       await runNext(runRoot, ['build', ...withBundlerFlag(passthrough)], env);
+      applyRouteLangs(runRoot);
       copyOutToCwd(runRoot);
       break;
 

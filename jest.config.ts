@@ -10,6 +10,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^lefolio-active-template$': '<rootDir>/src/lib/templates/no-external.ts',
+    '^lefolio-builtin-template$': '<rootDir>/src/lib/templates/no-builtin.ts',
   },
 };
 

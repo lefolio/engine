@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&display=swap");
 
 html {
   font-size: calc(var(--text-base, 1rem) * var(--font-scale, 1));
@@ -76,8 +75,7 @@ body {
   color: var(--color-text);
 }
 
-.prose-content pre.code-block,
-.prose-content .syntax-block {
+.prose-content pre.code-block {
   margin: 1.5rem 0;
   padding: 1rem 1.25rem;
   border-radius: 0.5rem;
@@ -94,18 +92,6 @@ body {
   color: inherit;
   padding: 0;
   font-size: inherit;
-}
-
-.prose-content .syntax-block-code {
-  background: transparent !important;
-}
-
-.prose-content .syntax-block .token.comment,
-.prose-content .syntax-block .token.prolog,
-.prose-content .syntax-block .token.doctype,
-.prose-content .syntax-block .token.cdata {
-  color: var(--color-text-muted);
-  font-style: italic;
 }
 
 .content-audio {

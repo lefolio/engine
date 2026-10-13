@@ -5,22 +5,16 @@ import {
   DefaultSectionIndex,
   DefaultStandalonePage,
 } from './defaults';
-import { academicTemplate } from '@/templates/academic';
-import { treasureTemplate } from '@/templates/treasure';
-import { portfolioTemplate } from '@/templates/portfolio';
 import { collectLocalTemplates } from './collect-local';
+import * as builtinTemplateEntry from 'lefolio-builtin-template';
 import * as localTemplateEntry from 'lefolio-active-template';
 
-const builtins: Record<string, TemplateModule> = {
-  academic: academicTemplate,
-  treasure: treasureTemplate,
-  portfolio: portfolioTemplate,
-};
+const templates: Record<string, TemplateModule> = {};
 
-const templates: Record<string, TemplateModule> = { ...builtins };
-
-for (const local of collectLocalTemplates(localTemplateEntry as Record<string, unknown>)) {
-  templates[local.id] = local;
+for (const entry of [builtinTemplateEntry, localTemplateEntry]) {
+  for (const template of collectLocalTemplates(entry as Record<string, unknown>)) {
+    templates[template.id] = template;
+  }
 }
 
 function withDefaults(template: TemplateModule): ResolvedTemplateModule {
@@ -39,11 +33,14 @@ export function getTemplate(id: string): ResolvedTemplateModule {
     return withDefaults(template);
   }
 
-  if (typeof console !== 'undefined') {
-    console.warn(`Unknown template "${id}", falling back to academic.`);
+  const [fallback] = Object.values(templates);
+  if (!fallback) {
+    throw new Error(`Template "${id}" not found (no built-in or site-local template is available).`);
   }
-
-  return withDefaults(templates.academic);
+  if (typeof console !== 'undefined') {
+    console.warn(`Unknown template "${id}", falling back to "${fallback.id}".`);
+  }
+  return withDefaults(fallback);
 }
 
 export function resolveTemplateId(manifest: {

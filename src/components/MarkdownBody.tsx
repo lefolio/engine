@@ -1,11 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { remarkPlugins, rehypePlugins } from '@/lib/markdown/processor';
 import { preprocessColumns } from '@/lib/markdown/preprocess-columns';
 import { splitColumnFence } from '@/lib/markdown/preprocess-columns';
@@ -20,7 +16,6 @@ import {
 import { parseYouTubeVideoId, preprocessYouTubeVideos } from '@/lib/markdown/youtube';
 import { parseSoundCloudUrl, preprocessSoundCloud } from '@/lib/markdown/soundcloud';
 import { markdownUrlTransform } from '@/lib/markdown/url-transform';
-import { useDarkTheme } from '@/hooks/use-dark-theme';
 import ColumnsLayout from './ColumnsLayout';
 import ComponentHost from './markdown/ComponentHost';
 import { AudioPlaybackProvider } from './audio/AudioPlaybackContext';
@@ -28,10 +23,6 @@ import AudioPlayer, { isAudioHref, titleFromAudioHref } from './audio/AudioPlaye
 import SoundCloudEmbed from './SoundCloudEmbed';
 import YouTubeShortsRow from './YouTubeShortsRow';
 import YouTubeEmbed from './YouTubeEmbed';
-import 'katex/dist/katex.min.css';
-
-const MermaidBlock = dynamic(() => import('./MermaidBlock'), { ssr: false });
-const PlotlyBlock = dynamic(() => import('./PlotlyBlock'), { ssr: false });
 
 interface MarkdownBodyProps {
   content: string;
@@ -99,7 +90,6 @@ function soundCloudUrlsFromParagraph(children: ReactNode): string[] | null {
 }
 
 function CodeBlock({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) {
-  const dark = useDarkTheme();
   const match = /language-([\w-]+)/.exec(className || '');
   const lang = match?.[1];
   const code = String(children).replace(/\n$/, '');
@@ -114,46 +104,7 @@ function CodeBlock({ className, children, ...props }: React.ComponentPropsWithou
     return <ComponentHost id={block.id} content={block.body} />;
   }
 
-  if (lang === 'mermaid') {
-    return <MermaidBlock chart={code} />;
-  }
-
-  if (lang === 'plotly') {
-    return <PlotlyBlock spec={code} />;
-  }
-
-  if (lang) {
-    return (
-      <SyntaxHighlighter
-        language={lang}
-        style={dark ? oneDark : oneLight}
-        PreTag="div"
-        className="code-block syntax-block"
-        customStyle={{
-          margin: 0,
-          padding: 0,
-          background: 'var(--color-bg-alt)',
-          color: 'var(--color-text)',
-          border: '1px solid var(--color-border)',
-          borderRadius: '0.5rem',
-          fontSize: 'inherit',
-          fontWeight: 400,
-          lineHeight: 1.6,
-        }}
-        codeTagProps={{
-          className: 'syntax-block-code',
-          style: {
-            fontWeight: 400,
-            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-          },
-        }}
-      >
-        {code}
-      </SyntaxHighlighter>
-    );
-  }
-
-  if (code.includes('\n')) {
+  if (lang || code.includes('\n')) {
     return (
       <pre className="code-block">
         <code {...props}>{code}</code>

@@ -150,9 +150,6 @@ Processed at **sync time** in `scripts/sync-content.mjs`:
 |--------|---------|
 | Wikilinks | `[[brdf]]`, `[[Publications/paper\|Label]]` |
 | Image embeds | `![[photo.jpg\|200\|left\|wrap]]` |
-| Math | `$inline$`, `$$block$$` (KaTeX) |
-| Mermaid | ` ```mermaid ` fenced block |
-| Plotly | ` ```plotly ` JSON block |
 | GFM | tables, strikethrough, task lists |
 
 Embed params: width (number), `left`/`right`/`center`, `wrap` (float).

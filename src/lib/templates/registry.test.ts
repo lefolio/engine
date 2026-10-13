@@ -7,23 +7,7 @@ jest.mock('./defaults', () => ({
   DefaultContentPage: () => null,
 }));
 
-jest.mock('@/templates/academic', () => ({
-  academicTemplate: {
-    id: 'academic',
-    routing: 'multipage',
-    Shell: () => null,
-    loadStyles: async () => undefined,
-  },
-}));
-jest.mock('@/templates/treasure', () => ({
-  treasureTemplate: {
-    id: 'treasure',
-    routing: 'multipage',
-    Shell: () => null,
-    loadStyles: async () => undefined,
-  },
-}));
-jest.mock('@/templates/portfolio', () => ({
+jest.mock('lefolio-builtin-template', () => ({
   portfolioTemplate: {
     id: 'portfolio',
     routing: 'multipage',
@@ -53,7 +37,7 @@ describe('templates/registry', () => {
     expect(resolveTemplateId({})).toBe('academic');
   });
 
-  it('getTemplate returns the requested template with defaults filled', async () => {
+  it('getTemplate returns the bundled built-in with defaults filled', async () => {
     const { getTemplate } = await import('./registry');
     const portfolio = getTemplate('portfolio');
     expect(portfolio.id).toBe('portfolio');
@@ -62,21 +46,20 @@ describe('templates/registry', () => {
     expect(typeof portfolio.ContentPage).toBe('function');
   });
 
-  it('getTemplate falls back to academic for unknown ids', async () => {
+  it('getTemplate falls back to an available template for unknown ids', async () => {
     const { getTemplate } = await import('./registry');
     const fallback = getTemplate('nope');
-    expect(fallback.id).toBe('academic');
+    expect(fallback.id).toBe('portfolio');
     expect(console.warn).toHaveBeenCalled();
   });
 
-  it('merges local templates and lets local id override builtins', async () => {
+  it('merges local templates and lets local id override the built-in', async () => {
     jest.doMock('lefolio-active-template', () => ({
       template: {
-        id: 'academic',
+        id: 'portfolio',
         routing: 'multipage',
         Shell: localShell,
         loadStyles: async () => undefined,
-        Home: () => null,
       },
       templates: [
         {
@@ -91,6 +74,6 @@ describe('templates/registry', () => {
 
     const { getTemplate } = await import('./registry');
     expect(getTemplate('salo').id).toBe('salo');
-    expect(getTemplate('academic').Shell).toBe(localShell);
+    expect(getTemplate('portfolio').Shell).toBe(localShell);
   });
 });

@@ -3,6 +3,8 @@ export interface SiteConfig {
   description?: string;
   url?: string;
   basePath?: string;
+  /** Default page language (BCP 47, e.g. `fr`). Pages override it with a `lang` frontmatter key. */
+  lang?: string;
 }
 
 export interface AuthorConfig {
@@ -20,12 +22,6 @@ export type NavigationConfig =
   | Record<string, string | null>
   | Array<string | Record<string, string>>;
 
-export interface ThemeConfig {
-  preset?: string;
-  mode?: 'light' | 'dark' | 'system';
-  overrides?: Record<string, string>;
-}
-
 export interface AnalyticsConfig {
   /** GA4 measurement ID, e.g. G-XXXXXXXXXX */
   google?: string;
@@ -42,7 +38,6 @@ export interface ContentConfig {
   author: AuthorConfig;
   navigation: NavigationConfig;
   template?: string;
-  theme?: ThemeConfig | string;
   analytics?: AnalyticsConfig;
   /** Obsidian vault root for wikilink/embed resolution (relative to content dir, or absolute). */
   vault?: string;
@@ -79,6 +74,8 @@ export interface PageFrontmatter {
   published?: boolean | string;
   /** Last-updated date (ISO or display string). */
   updated?: string;
+  /** Page language; on a section index note it also applies to the section's pages. */
+  lang?: string;
   [key: string]: unknown;
 }
 
@@ -90,6 +87,7 @@ export interface ManifestPage {
   sectionSlug: string;
   slug: string;
   title: string;
+  lang: string;
   frontmatter: PageFrontmatter;
   processedBody: string;
   href: string;
@@ -119,6 +117,7 @@ export interface SectionListItem {
 export interface SectionIndexNote {
   relativePath: string;
   title: string;
+  lang: string;
   frontmatter: PageFrontmatter;
   processedBody: string;
 }
@@ -140,6 +139,8 @@ export interface StandalonePage {
   /** Slugified URL segment (e.g. "tutorial" for "Tutorial.md"). */
   sectionSlug: string;
   title: string;
+  lang: string;
+  frontmatter: PageFrontmatter;
   processedBody: string;
   href: string;
 }
@@ -147,12 +148,17 @@ export interface StandalonePage {
 export interface ContentManifest {
   generatedAt: string;
   template: string;
-  theme: string;
   config: ContentConfig;
   basePath: string;
+  /** Site default language (`site.lang`, default `en`). */
+  lang: string;
+  /** Language of every route (no basePath), e.g. `{ "/": "fr", "/en/": "en" }`. */
+  routeLangs: Record<string, string>;
   home: {
     relativePath: string;
     title: string;
+    lang: string;
+    frontmatter: PageFrontmatter;
     processedBody: string;
     heroImage?: string | null;
   } | null;

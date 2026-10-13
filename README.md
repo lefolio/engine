@@ -36,6 +36,16 @@ npx lefolio dev
 
 Site-local templates: if `<cwd>/src/index.ts` exports `TemplateModule`(s), they are registered. Select with `Content/config.yaml` `template: <id>`.
 
+Each template has a single look: colors and fonts live in its own CSS (there are no theme presets). Only the selected template is bundled; restart `lefolio dev` after changing `template:`. A dark template sets `colorScheme: 'dark'` on its `TemplateModule`.
+
+### Languages
+
+`site.lang` in `config.yaml` sets the default `<html lang>` (default `en`). A page overrides it with `lang:` in its frontmatter, and a `lang:` on a section index note (`En/En.md`) applies to every page in that section. `lefolio build` writes the per-page value into the exported HTML.
+
+### Image alt text
+
+`![[photo.webp|A description]]` uses the alias as alt text; without one, the file name is used.
+
 ## Develop the engine
 
 ```bash
