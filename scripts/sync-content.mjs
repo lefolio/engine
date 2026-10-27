@@ -662,10 +662,12 @@ function scanPages(config, vaultRoot) {
 
   const standaloneRoutes = processedStandalonePages.map((page) => {
     const rawSegment = path.basename(page.relativePath, '.md');
+    // Prefer page.slug (permalink) so accented filenames still get clean URLs.
+    const segment = page.slug || toSectionSlug(rawSegment);
     return {
       relativePath: page.relativePath,
       segment: rawSegment,
-      sectionSlug: toSectionSlug(rawSegment),
+      sectionSlug: segment,
       title: page.title,
       lang: langOf(page),
       frontmatter: page.frontmatter,

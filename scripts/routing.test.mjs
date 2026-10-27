@@ -28,6 +28,19 @@ describe('pageRoute', () => {
     ).toBe('/my-page/');
   });
 
+  it('uses permalink slug for standalone pages when it differs from the filename', () => {
+    expect(
+      pageRoute(
+        {
+          relativePath: 'Les Thérapies Somatiques.md',
+          section: null,
+          slug: 'les-therapies-somatiques',
+        },
+        'Home.md'
+      )
+    ).toBe('/les-therapies-somatiques/');
+  });
+
   it('maps section pages to /sectionslug/slug/', () => {
     expect(
       pageRoute(

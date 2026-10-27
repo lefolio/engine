@@ -26,7 +26,8 @@ export function pageRoute(page, homePath) {
   }
 
   if (!page.section) {
-    const segment = slugify(path.basename(page.relativePath, '.md'));
+    // Prefer `slug` (includes frontmatter `permalink`) over re-slugifying the filename.
+    const segment = page.slug || slugify(path.basename(page.relativePath, '.md'));
     return `/${segment}/`;
   }
 
