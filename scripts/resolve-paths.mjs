@@ -8,7 +8,8 @@ export const ENGINE_ROOT = path.join(__dirname, '..');
 export const MANIFEST_PATH = path.join(ENGINE_ROOT, '.content', 'manifest.json');
 export const ENGINE_META_PATH = path.join(ENGINE_ROOT, '.content', 'engine.json');
 export const SENTINEL_PATH = path.join(ENGINE_ROOT, 'src', 'lib', 'content', 'content-version.ts');
-export const ASSETS_OUT = path.join(ENGINE_ROOT, 'public', 'content-assets');
+export const PUBLIC_DIR = path.join(ENGINE_ROOT, 'public');
+export const ASSETS_OUT = path.join(PUBLIC_DIR, 'content-assets');
 export const ENGINE_OUT = path.join(ENGINE_ROOT, 'out');
 
 /**

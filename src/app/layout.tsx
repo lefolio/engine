@@ -9,15 +9,19 @@ import { CONTENT_VERSION } from '@/lib/content/content-version';
 import { getTemplate, resolveTemplateId } from '@/lib/templates/registry';
 import { MarkdownComponentsProvider } from '@/components/markdown/MarkdownComponentsProvider';
 
+/** 1×1 transparent GIF — used when the site omits `favicon:` so browsers don't keep a stale /favicon.ico. */
+const EMPTY_FAVICON =
+  'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
 export function generateMetadata(): Metadata {
   const manifest = loadManifest();
   const metadata: Metadata = {
     title: manifest.config.site.title,
     description: manifest.config.site.description,
+    icons: manifest.favicon
+      ? { icon: manifest.favicon }
+      : { icon: [{ url: EMPTY_FAVICON, type: 'image/gif', sizes: '1x1' }] },
   };
-  if (manifest.favicon) {
-    metadata.icons = { icon: manifest.favicon };
-  }
   return metadata;
 }
 

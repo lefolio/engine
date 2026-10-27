@@ -43,7 +43,10 @@ export interface ContentConfig {
   vault?: string;
   /** Optional site logo path (vault-relative), used by landing-style shells. */
   logo?: string;
-  /** Optional favicon path (vault-relative), copied to content-assets at sync. */
+  /**
+   * Optional favicon path (vault-relative), copied to content-assets and `public/favicon.*` at sync.
+   * Omit (or set a non-string) for no site icon — the engine serves a blank icon instead of a default.
+   */
   favicon?: string;
   /** Optional header CTA (label + href; href may be external). */
   cta?: HeaderCtaConfig;
