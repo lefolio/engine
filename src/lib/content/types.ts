@@ -52,8 +52,24 @@ export interface ContentConfig {
   cta?: HeaderCtaConfig;
 }
 
+/**
+ * SEO overrides. Document `<title>` is `seo.title`, otherwise the page `title`.
+ * Meta description is `seo.description`, otherwise frontmatter `description`.
+ */
+export interface PageSeo {
+  title?: string;
+  description?: string;
+  /** Public path or absolute URL for `og:image`. */
+  image?: string;
+  /** `article` sets `og:type` and is a hint for template JSON-LD. `service` is template-specific. */
+  schema?: string;
+}
+
 export interface PageFrontmatter {
   title?: string;
+  /** Meta description (and default social description). */
+  description?: string;
+  seo?: PageSeo;
   date?: string;
   order?: number;
   permalink?: string;

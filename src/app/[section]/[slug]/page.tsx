@@ -1,5 +1,17 @@
+import type { Metadata } from 'next';
 import { getAllPageParams, getPage, loadManifest } from '@/lib/content/load-manifest';
+import { metadataForHref } from '@/lib/content/page-seo';
 import { getTemplate, resolveTemplateId } from '@/lib/templates/registry';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ section: string; slug: string }>;
+}): Promise<Metadata> {
+  const { section, slug } = await params;
+  if (section === '_' || slug === '_') return {};
+  return metadataForHref(loadManifest(), `/${section}/${slug}/`);
+}
 
 export function generateStaticParams() {
   const params = getAllPageParams();
