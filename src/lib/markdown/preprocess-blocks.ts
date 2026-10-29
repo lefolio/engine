@@ -14,9 +14,30 @@ export function preprocessComponentBlocks(markdown: string): string {
   const lines = markdown.split('\n');
   const out: string[] = [];
   let i = 0;
+  /** Active top-level ``` / ~~~ fence — `:::` inside must not become components. */
+  let topMdFence: string | null = null;
 
   while (i < lines.length) {
-    const open = OPEN_RE.exec(lines[i].trim());
+    const trimmedTop = lines[i].trim();
+
+    if (topMdFence) {
+      out.push(lines[i]);
+      if (trimmedTop.startsWith(topMdFence)) {
+        topMdFence = null;
+      }
+      i += 1;
+      continue;
+    }
+
+    const topFence = MD_FENCE_RE.exec(trimmedTop);
+    if (topFence) {
+      topMdFence = topFence[1][0].repeat(topFence[1].length);
+      out.push(lines[i]);
+      i += 1;
+      continue;
+    }
+
+    const open = OPEN_RE.exec(trimmedTop);
     if (!open || open[1].toLowerCase() === 'columns') {
       out.push(lines[i]);
       i += 1;

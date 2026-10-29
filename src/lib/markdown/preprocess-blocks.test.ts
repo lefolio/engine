@@ -72,6 +72,31 @@ describe('preprocessComponentBlocks', () => {
     expect(out.match(/lefolio-block/g)?.length).toBe(1);
     expect(out).toMatch(/`{4,}lefolio-block/);
   });
+
+  it('ignores ::: lines inside top-level markdown code fences', () => {
+    const input = [
+      'Here is how it looks:',
+      '',
+      '``` markdown',
+      '::: hero',
+      '## My Brand',
+      ':::',
+      '',
+      '::: about',
+      '## Our Story',
+      ':::',
+      '```',
+      '',
+      'The links turn into CTA buttons.',
+    ].join('\n');
+    const out = preprocessComponentBlocks(input);
+    expect(out).toContain('``` markdown');
+    expect(out).toContain('::: hero');
+    expect(out).toContain('::: about');
+    expect(out).toContain('## Our Story');
+    expect(out).toContain('The links turn into CTA buttons.');
+    expect(out).not.toContain('lefolio-block');
+  });
 });
 
 describe('splitBlockFence', () => {
