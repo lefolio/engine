@@ -3,6 +3,9 @@ import { getSectionRoutes, loadManifest } from '@lefolio/engine/content';
 import { metadataForHref } from '@lefolio/engine/seo';
 import Section, { Standalone } from '@/components/Section';
 
+/** Required with `output: 'export'` — unknown segments (e.g. /favicon.ico) must 404. */
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {

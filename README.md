@@ -17,17 +17,19 @@ lefolio/
 ## New site
 
 ```bash
-npx lefolio init my-site
+npx @lefolio/engine init my-site
 cd my-site
 npm install
 npx lefolio dev
 ```
 
+`npx lefolio` only works after `@lefolio/engine` is installed. Before that, npm looks for a package named `lefolio`, which is not published. Use `npx @lefolio/engine`.
+
 `lefolio init` copies the route files once and refuses a directory that already has files. After that, `app/` and `components/` belong to the site.
 
 `lefolio dev` compiles `Content/` into `.content/manifest.json` and `public/content-assets`, watches the vault, and runs `next dev` in the site. `lefolio build` does the same with `next build`.
 
-The site installs Next, React, and Tailwind. Import the library from `@lefolio/engine/content`, `@lefolio/engine/seo`, and `@lefolio/engine/markdown`. Pass the site's own `:::` component map to `MarkdownComponentsProvider`.
+The scaffold installs Next and React and styles with plain CSS. Import the library from `@lefolio/engine/content`, `@lefolio/engine/seo`, and `@lefolio/engine/markdown`. Pass the site's own `:::` component map through a client `Providers` wrapper.
 
 ### Languages
 

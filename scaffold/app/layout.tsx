@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { loadManifest } from '@lefolio/engine/content';
-import { DocumentLang, MarkdownComponentsProvider } from '@lefolio/engine/markdown';
+import { DocumentLang } from '@lefolio/engine/markdown';
 import { CONTENT_VERSION } from '../.content/content-version';
+import Providers from '@/components/Providers';
+import SiteShell from '@/components/SiteShell';
 import './globals.css';
 
 export function generateMetadata(): Metadata {
@@ -18,12 +20,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   void CONTENT_VERSION;
 
   return (
-    <html lang={manifest.lang} suppressHydrationWarning>
+    <html lang={manifest.lang} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <DocumentLang fallback={manifest.lang} routeLangs={manifest.routeLangs} />
-        <MarkdownComponentsProvider>
-          <main>{children}</main>
-        </MarkdownComponentsProvider>
+        <Providers>
+          <SiteShell manifest={manifest}>{children}</SiteShell>
+        </Providers>
       </body>
     </html>
   );

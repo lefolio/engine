@@ -3,6 +3,9 @@ import { getPage, loadManifest, pageParams } from '@lefolio/engine/content';
 import { metadataForHref } from '@lefolio/engine/seo';
 import Page from '@/components/Page';
 
+/** Required with `output: 'export'` — unknown segments must 404. */
+export const dynamicParams = false;
+
 function joinSlug(slug: string | string[]): string {
   return Array.isArray(slug) ? slug.join('/') : slug;
 }
