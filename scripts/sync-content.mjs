@@ -13,7 +13,6 @@ import {
   ENGINE_META_PATH,
   resolveVaultRoot,
 } from './resolve-paths.mjs';
-import { resolveTemplateId } from './resolve-template.mjs';
 import {
   buildVaultIndex,
   resolveAsset,
@@ -678,7 +677,7 @@ function scanPages(config, vaultRoot) {
 
   return {
     generatedAt: new Date().toISOString(),
-    template: resolveTemplateId(config),
+    template: '',
     config,
     basePath,
     lang: siteLang,
@@ -798,8 +797,6 @@ function main() {
   const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
   const vaultRoot = resolveVaultRoot(CONTENT_DIR, config);
   const manifest = scanPages(config, vaultRoot);
-  const template = resolveTemplateId(config);
-
   syncRootFavicon(manifest.favicon);
 
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
@@ -812,7 +809,6 @@ function main() {
         contentDir: CONTENT_DIR,
         vaultRoot,
         basePath: manifest.basePath,
-        template,
       },
       null,
       2

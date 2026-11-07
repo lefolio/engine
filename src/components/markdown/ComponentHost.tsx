@@ -1,6 +1,6 @@
 'use client';
 
-import { MarkdownBody } from '@/components/MarkdownBody';
+import { MarkdownBody } from '../MarkdownBody';
 import { useMarkdownComponents } from './MarkdownComponentsProvider';
 
 interface ComponentHostProps {

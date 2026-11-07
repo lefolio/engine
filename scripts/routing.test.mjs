@@ -50,6 +50,19 @@ describe('pageRoute', () => {
     ).toBe('/blog/my-post/');
   });
 
+  it('keeps slash segments from a permalink so nested routes resolve', () => {
+    expect(
+      pageRoute(
+        {
+          relativePath: 'En/Somatic therapies.md',
+          section: 'En',
+          slug: 'articles/somatic-therapies',
+        },
+        'Home.md'
+      )
+    ).toBe('/en/articles/somatic-therapies/');
+  });
+
   it('lowercases section with spaces', () => {
     expect(
       pageRoute(

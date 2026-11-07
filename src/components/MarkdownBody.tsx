@@ -2,20 +2,20 @@
 
 import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { remarkPlugins, rehypePlugins } from '@/lib/markdown/processor';
-import { preprocessColumns } from '@/lib/markdown/preprocess-columns';
-import { splitColumnFence } from '@/lib/markdown/preprocess-columns';
+import { remarkPlugins, rehypePlugins } from '../lib/markdown/processor';
+import { preprocessColumns } from '../lib/markdown/preprocess-columns';
+import { splitColumnFence } from '../lib/markdown/preprocess-columns';
 import {
   preprocessComponentBlocks,
   splitBlockFence,
-} from '@/lib/markdown/preprocess-blocks';
+} from '../lib/markdown/preprocess-blocks';
 import {
   parseYouTubeShortId,
   preprocessYouTubeShorts,
-} from '@/lib/markdown/youtube-shorts';
-import { parseYouTubeVideoId, preprocessYouTubeVideos } from '@/lib/markdown/youtube';
-import { parseSoundCloudUrl, preprocessSoundCloud } from '@/lib/markdown/soundcloud';
-import { markdownUrlTransform } from '@/lib/markdown/url-transform';
+} from '../lib/markdown/youtube-shorts';
+import { parseYouTubeVideoId, preprocessYouTubeVideos } from '../lib/markdown/youtube';
+import { parseSoundCloudUrl, preprocessSoundCloud } from '../lib/markdown/soundcloud';
+import { markdownUrlTransform } from '../lib/markdown/url-transform';
 import ColumnsLayout from './ColumnsLayout';
 import ComponentHost from './markdown/ComponentHost';
 import { AudioPlaybackProvider } from './audio/AudioPlaybackContext';

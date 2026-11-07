@@ -1,8 +1,9 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
-import type { MarkdownBlockComponent } from '@/lib/markdown/components/types';
-import type { ColorScheme } from '@/lib/templates/types';
+import type { MarkdownBlockComponent } from '../../lib/markdown/components/types';
+
+export type ColorScheme = 'light' | 'dark';
 
 const MarkdownComponentsContext = createContext<Record<string, MarkdownBlockComponent>>(
   {}

@@ -28,3 +28,12 @@ export function getSectionRoutes() {
   const manifest = loadManifest();
   return manifest.sectionRoutes;
 }
+
+/** Static params for `app/[section]/[...slug]`, including a placeholder when the vault is empty. */
+export function pageParams() {
+  const params = getAllPageParams().map((page) => ({
+    section: page.section,
+    slug: page.slug.split('/').filter(Boolean),
+  }));
+  return params.length > 0 ? params : [{ section: '_', slug: ['_'] }];
+}

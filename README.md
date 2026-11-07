@@ -1,6 +1,6 @@
 # `@lefolio/engine`
 
-Publish a static site from an Obsidian vault — CLI `lefolio` + Next.js runtime + built-in templates.
+Compile an Obsidian vault into a static site. The engine is the CLI and the content library. The site is an ordinary Next.js app.
 
 The marketing site lives in **[lefolio/lefolio.md](https://github.com/lefolio/lefolio.md)** (`https://lefolio.md`).
 
@@ -9,34 +9,25 @@ The marketing site lives in **[lefolio/lefolio.md](https://github.com/lefolio/le
 ```text
 lefolio/
 ├── scripts/             # lefolio CLI, sync, watch
-├── src/                 # Next app + built-in templates (academic, portfolio, treasure)
-├── package.json         # name: @lefolio/engine
-└── PACKAGING.md         # npm publish notes
+├── scaffold/            # files copied by `lefolio init`
+├── src/                 # content, SEO, and markdown libraries
+└── package.json         # name: @lefolio/engine
 ```
 
-## Use with a site vault
+## New site
 
 ```bash
-# from a thin site with Content/ in cwd:
-npm install @lefolio/engine   # or file:../lefolio while developing
+npx lefolio init my-site
+cd my-site
+npm install
 npx lefolio dev
 ```
 
-```json
-{
-  "dependencies": {
-    "@lefolio/engine": "file:../lefolio"
-  },
-  "scripts": {
-    "dev": "lefolio dev",
-    "build": "lefolio build"
-  }
-}
-```
+`lefolio init` copies the route files once and refuses a directory that already has files. After that, `app/` and `components/` belong to the site.
 
-Site-local templates: if `<cwd>/src/index.ts` exports `TemplateModule`(s), they are registered. Select with `Content/config.yaml` `template: <id>`.
+`lefolio dev` compiles `Content/` into `.content/manifest.json` and `public/content-assets`, watches the vault, and runs `next dev` in the site. `lefolio build` does the same with `next build`.
 
-Each template has a single look: colors and fonts live in its own CSS (there are no theme presets). Only the selected template is bundled; restart `lefolio dev` after changing `template:`. A dark template sets `colorScheme: 'dark'` on its `TemplateModule`.
+The site installs Next, React, and Tailwind. Import the library from `@lefolio/engine/content`, `@lefolio/engine/seo`, and `@lefolio/engine/markdown`. Pass the site's own `:::` component map to `MarkdownComponentsProvider`.
 
 ### Languages
 

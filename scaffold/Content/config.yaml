@@ -1,0 +1,8 @@
+site:
+  title: LeFolio
+  description: A site published from an Obsidian vault.
+  url: https://example.com
+
+lang: en
+home: Home.md
+vault: .

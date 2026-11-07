@@ -1,304 +1,200 @@
 #!/usr/bin/env node
 import { spawn } from 'child_process';
-import crypto from 'crypto';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
-import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 import { contentEnv, ENGINE_ROOT } from './resolve-paths.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SCAFFOLD_DIR = path.join(ENGINE_ROOT, 'scaffold');
 
-/**
- * Next.js refuses to transpile app source under `node_modules/`, and also
- * mis-detects the app root when a parent folder has package-lock.json.
- * Packaged installs therefore run from a cache dir outside the site tree.
- */
-function isPackagedInstall(root) {
-  return root.split(path.sep).includes('node_modules');
-}
-
-function resolveDepsNodeModules() {
-  const candidates = [
-    path.join(process.cwd(), 'node_modules'),
-    path.join(ENGINE_ROOT, 'node_modules'),
-  ];
-  for (const dir of candidates) {
-    if (fs.existsSync(path.join(dir, 'next', 'package.json'))) {
-      return dir;
-    }
-  }
-  throw new Error(
-    'Could not find next in node_modules. Run npm install in the site (or engine) directory.'
-  );
-}
-
-function ensureNodeModulesLink(runRoot) {
-  const linkPath = path.join(runRoot, 'node_modules');
-  const target = resolveDepsNodeModules();
-  try {
-    const stat = fs.lstatSync(linkPath);
-    if (stat.isSymbolicLink() || stat.isDirectory()) {
-      fs.rmSync(linkPath, { recursive: true, force: true });
-    }
-  } catch {
-    // missing
-  }
-  fs.symlinkSync(target, linkPath, process.platform === 'win32' ? 'junction' : 'dir');
-}
-
-function syncRuntime(pkgRoot, runRoot, { force = false } = {}) {
-  const pkg = JSON.parse(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
-  const stampPath = path.join(runRoot, '.engine-version');
-  const upToDate =
-    !force &&
-    fs.existsSync(stampPath) &&
-    fs.readFileSync(stampPath, 'utf8').trim() === pkg.version;
-
-  if (!upToDate) {
-    fs.mkdirSync(runRoot, { recursive: true });
-    const items = [
-      'src',
-      'scripts',
-      'next.config.mjs',
-      'postcss.config.mjs',
-      'tsconfig.json',
-      'next-env.d.ts',
-      'package.json',
-    ];
-    for (const item of items) {
-      const from = path.join(pkgRoot, item);
-      const to = path.join(runRoot, item);
-      if (!fs.existsSync(from)) continue;
-      fs.rmSync(to, { recursive: true, force: true });
-      fs.cpSync(from, to, { recursive: true });
-    }
-    // Isolate from parent lockfiles so Next treats this folder as the app root.
-    fs.writeFileSync(path.join(runRoot, 'package-lock.json'), '{"lockfileVersion":3,"packages":{}}\n');
-    fs.mkdirSync(path.join(runRoot, 'public'), { recursive: true });
-    fs.writeFileSync(stampPath, `${pkg.version}\n`);
-    console.log(`Prepared LeFolio runtime at ${runRoot} (engine ${pkg.version})`);
-  }
-
-  ensureNodeModulesLink(runRoot);
-}
-
-function realpathOrResolve(dir) {
-  try {
-    return fs.realpathSync(dir);
-  } catch {
-    return path.resolve(dir);
-  }
-}
-
-function resolveRunRoot() {
-  const engineReal = realpathOrResolve(ENGINE_ROOT);
-  const cwdReal = realpathOrResolve(process.cwd());
-
-  // Developing inside the engine repo: run Next from the checkout itself.
-  if (cwdReal === engineReal) {
-    return ENGINE_ROOT;
-  }
-
-  // Consumer sites always get an isolated cache dir — including `file:../lefolio`
-  // links, which are NOT under node_modules but must not share the engine's `.next`
-  // (otherwise basePath from one site sticks on another).
-  const pkg = JSON.parse(fs.readFileSync(path.join(ENGINE_ROOT, 'package.json'), 'utf8'));
-  const packaged = isPackagedInstall(ENGINE_ROOT);
-  const siteKey = crypto.createHash('sha1').update(cwdReal).digest('hex').slice(0, 12);
-  const label = packaged ? pkg.version : `dev-${pkg.version}`;
-  const runRoot = path.join(os.homedir(), '.cache', 'lefolio', 'runtime', `${label}-${siteKey}`);
-  syncRuntime(ENGINE_ROOT, runRoot, { force: !packaged });
-  return runRoot;
-}
-
-function requireFrom(root) {
-  return createRequire(path.join(root, 'package.json'));
-}
-
-function resolveNextBin(runRoot) {
-  try {
-    return requireFrom(runRoot).resolve('next/dist/bin/next');
-  } catch {
-    const fallback = path.join(runRoot, 'node_modules', 'next', 'dist', 'bin', 'next');
-    if (fs.existsSync(fallback)) return fallback;
-    throw new Error('Could not resolve next binary. Run npm install in the site directory.');
-  }
-}
-
-function contentArgs(args) {
-  const out = [];
-  const contentIdx = args.indexOf('--content');
-  if (contentIdx !== -1 && args[contentIdx + 1]) {
-    out.push('--content', args[contentIdx + 1]);
-  }
-  const vaultIdx = args.indexOf('--vault');
-  if (vaultIdx !== -1 && args[vaultIdx + 1]) {
-    out.push('--vault', args[vaultIdx + 1]);
-  }
-  return out;
-}
-
-function stripCliFlags(args) {
-  const out = [...args];
-  for (const flag of ['--content', '--vault', '--template']) {
-    const idx = out.indexOf(flag);
-    if (idx !== -1) {
-      out.splice(idx, 2);
-    }
-  }
-  return out;
-}
-
-function run(command, args, options = {}) {
+function run(cmd, args, options) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const child = spawn(cmd, args, {
       stdio: 'inherit',
       shell: process.platform === 'win32',
       ...options,
     });
     child.on('close', (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`));
+      else reject(new Error(`${cmd} exited with code ${code}`));
     });
   });
 }
 
-function runNext(runRoot, nextArgs, env) {
-  const nextBin = resolveNextBin(runRoot);
-  return run(process.execPath, [nextBin, ...nextArgs], { cwd: runRoot, env });
+function nextArgs(command, extra) {
+  if (!extra.includes('--turbopack') && !extra.includes('--webpack')) {
+    return [command, '--webpack', ...extra];
+  }
+  return [command, ...extra];
+}
+
+function resolveNextBin(cwd) {
+  const local = path.join(cwd, 'node_modules', 'next', 'dist', 'bin', 'next');
+  if (fs.existsSync(local)) return local;
+  const engine = path.join(ENGINE_ROOT, 'node_modules', 'next', 'dist', 'bin', 'next');
+  if (fs.existsSync(engine)) return engine;
+  throw new Error('next is not installed. Add it to this site: npm install next react react-dom');
+}
+
+function contentArgs(argv) {
+  const args = [];
+  for (const flag of ['--content', '--vault']) {
+    const idx = argv.indexOf(flag);
+    if (idx !== -1 && argv[idx + 1]) {
+      args.push(flag, argv[idx + 1]);
+    }
+  }
+  return args;
 }
 
 /**
- * The root layout renders the site default `lang`; set each exported page's
- * `<html lang>` from the manifest's per-route languages.
+ * A file: install of this checkout has its own @types/react, and so does the
+ * site. TypeScript treats those as different React types. Point the site at
+ * the engine's copy. A published install has no nested @types, so this is a no-op.
  */
-function applyRouteLangs(runRoot) {
-  const manifestPath = path.join(runRoot, '.content', 'manifest.json');
-  const outDir = path.join(runRoot, 'out');
-  if (!fs.existsSync(manifestPath) || !fs.existsSync(outDir)) return;
-
-  const { lang: fallback, routeLangs = {} } = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  for (const [route, lang] of Object.entries(routeLangs)) {
-    if (lang === fallback) continue;
-    const file = path.join(outDir, ...route.split('/').filter(Boolean), 'index.html');
-    if (!fs.existsSync(file)) continue;
-    const html = fs.readFileSync(file, 'utf8');
-    fs.writeFileSync(file, html.replace(/<html([^>]*?)\slang="[^"]*"/, `<html$1 lang="${lang}"`));
+function shareReactTypes(siteRoot) {
+  const engineTypes = path.join(ENGINE_ROOT, 'node_modules', '@types');
+  const siteTypes = path.join(siteRoot, 'node_modules', '@types');
+  for (const name of ['react', 'react-dom']) {
+    const source = path.join(engineTypes, name);
+    const dest = path.join(siteTypes, name);
+    if (!fs.existsSync(source) || !fs.existsSync(path.dirname(dest))) continue;
+    let destReal = dest;
+    try {
+      destReal = fs.realpathSync(dest);
+    } catch {
+      destReal = dest;
+    }
+    if (destReal === fs.realpathSync(source)) continue;
+    fs.rmSync(dest, { recursive: true, force: true });
+    const rel = path.relative(path.dirname(dest), source);
+    fs.symlinkSync(rel, dest);
   }
 }
 
-/** When the CLI is invoked from a consumer site, mirror `out/` into cwd. */
-function copyOutToCwd(runRoot) {
-  const cwd = path.resolve(process.cwd());
-  if (cwd === path.resolve(runRoot)) return;
-  const engineOut = path.join(runRoot, 'out');
-  if (!fs.existsSync(engineOut)) {
-    console.warn(`Build output not found at ${engineOut}`);
-    return;
+function applyRouteLangs(siteRoot) {
+  const manifestPath = path.join(siteRoot, '.content', 'manifest.json');
+  if (!fs.existsSync(manifestPath)) return;
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const routeLangs = manifest.routeLangs ?? {};
+  const outDir = path.join(siteRoot, 'out');
+  if (!fs.existsSync(outDir)) return;
+
+  for (const [href, lang] of Object.entries(routeLangs)) {
+    if (typeof lang !== 'string' || !lang) continue;
+    const route = href.replace(/^\/+|\/+$/g, '');
+    const htmlPath = route
+      ? path.join(outDir, route, 'index.html')
+      : path.join(outDir, 'index.html');
+    if (!fs.existsSync(htmlPath)) continue;
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    const next = html.replace(/<html\b[^>]*>/, (tag) => {
+      if (/\slang=/.test(tag)) return tag.replace(/\slang="[^"]*"/, ` lang="${lang}"`);
+      return tag.replace('<html', `<html lang="${lang}"`);
+    });
+    if (next !== html) fs.writeFileSync(htmlPath, next);
   }
-  const dest = path.join(cwd, 'out');
-  fs.rmSync(dest, { recursive: true, force: true });
-  fs.cpSync(engineOut, dest, { recursive: true });
-  console.log(`Copied static export to ${dest}`);
 }
 
-function withBundlerFlag(args, fallback = '--webpack') {
-  const hasWebpack = args.includes('--webpack');
-  const hasTurbopack = args.includes('--turbopack');
-  if (hasWebpack || hasTurbopack) return args;
-  return [...args, fallback];
+function copyDir(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) copyDir(from, to);
+    else fs.copyFileSync(from, to);
+  }
+}
+
+function initSite(dir) {
+  const target = path.resolve(dir || '.');
+  if (!fs.existsSync(SCAFFOLD_DIR)) {
+    throw new Error(`Scaffold is missing at ${SCAFFOLD_DIR}`);
+  }
+  if (fs.existsSync(target) && fs.readdirSync(target).length > 0) {
+    throw new Error(`Refusing to init ${target}: the directory is not empty.`);
+  }
+  fs.mkdirSync(target, { recursive: true });
+  copyDir(SCAFFOLD_DIR, target);
+  console.log(`Created a LeFolio app in ${target}`);
+  console.log('Next: cd there, npm install, then lefolio dev');
 }
 
 async function main() {
-  const rawArgs = process.argv.slice(2);
-  const command = rawArgs[0];
-  const env = contentEnv(rawArgs);
-  const contentFlag = contentArgs(rawArgs);
-  const passthrough = stripCliFlags(rawArgs.slice(1));
-  const runRoot = resolveRunRoot();
+  const argv = process.argv.slice(2);
+  const command = argv.find((arg) => !arg.startsWith('-'));
+  const siteRoot = process.cwd();
+  const env = contentEnv(argv);
+  const flags = contentArgs(argv);
+  const passthrough = argv.filter((arg, index) => {
+    if (arg.startsWith('-') && arg !== command) {
+      const prev = argv[index - 1];
+      if (prev === '--content' || prev === '--vault') return false;
+      return true;
+    }
+    if (argv[index - 1] === '--content' || argv[index - 1] === '--vault') return false;
+    return false;
+  });
 
-  if (!command || command === '--help' || command === '-h') {
-    console.log(`Usage: lefolio <command> [--content <path>] [--vault <path>] [--template <path>]
+  if (!command || command === 'help' || command === '--help') {
+    console.log(`Usage: lefolio <command> [--content <path>] [--vault <path>]
 
 Commands:
-  sync    Scan content vault and write manifest
-  dev     Sync, watch content, and start Next.js dev server
-  build   Sync and run static export
+  init [dir]   Copy a Next.js app scaffold. Refuses a non-empty directory.
+  sync         Compile Content/ into .content/manifest.json and public/content-assets
+  dev          Sync, watch Content/, and run next dev in this directory
+  build        Sync, then next build in this directory
 
-Environment:
-  LEFOLIO_CONTENT         Path to site content folder (default: ./Content from cwd)
-  LEFOLIO_VAULT           Obsidian vault root for embed/link resolution
-  LEFOLIO_TEMPLATE_ROOT   Site root that has ./src exporting TemplateModule(s)
-
-Local templates:
-  If the site cwd has ./src/index.ts (or .tsx) exporting TemplateModule(s), they
-  are registered automatically. Select with Content/config.yaml \`template: <id>\`.
-  Override discovery with --template <path> (path to that site root).
-
-Vault root defaults to the nearest ancestor of the content folder that contains
-.obsidian/, otherwise the content folder itself. Override with --vault or
-config.yaml \`vault:\` when needed.
-
-Bundler (Next 16): defaults to --webpack for reliability with static export.
-Pass --turbopack to opt in.
-
-Examples:
-  lefolio dev
-  lefolio dev --content ~/Documents/MySite
-  lefolio build --turbopack
-  LEFOLIO_CONTENT=~/Documents/MySite lefolio build
+The site is an ordinary Next.js app. lefolio only compiles the vault.
 `);
     process.exit(command ? 0 : 1);
   }
 
+  const script = path.join(__dirname, 'sync-content.mjs');
+
   switch (command) {
+    case 'init': {
+      const dir = argv.find((arg, index) => index > argv.indexOf('init') && !arg.startsWith('-'));
+      initSite(dir);
+      break;
+    }
+
     case 'sync':
-      await run('node', ['scripts/sync-content.mjs', ...contentFlag], { cwd: runRoot, env });
+      await run(process.execPath, [script, ...flags], { cwd: siteRoot, env });
       break;
 
     case 'build':
-      await run('node', ['scripts/sync-content.mjs', ...contentFlag], { cwd: runRoot, env });
-      await runNext(runRoot, ['build', ...withBundlerFlag(passthrough)], env);
-      applyRouteLangs(runRoot);
-      copyOutToCwd(runRoot);
+      await run(process.execPath, [script, ...flags], { cwd: siteRoot, env });
+      shareReactTypes(siteRoot);
+      await run(process.execPath, [resolveNextBin(siteRoot), ...nextArgs('build', passthrough)], {
+        cwd: siteRoot,
+        env,
+      });
+      applyRouteLangs(siteRoot);
       break;
 
     case 'dev': {
-      await run('node', ['scripts/sync-content.mjs', ...contentFlag], { cwd: runRoot, env });
-      const smoke = env.LEFOLIO_SMOKE === '1' || env.LEFOLIO_SMOKE === 'true';
-      let watch = null;
-      if (!smoke) {
-        watch = spawn('node', ['scripts/watch-content.mjs', ...contentFlag], {
-          cwd: runRoot,
-          stdio: 'inherit',
-          env,
-          shell: process.platform === 'win32',
-        });
-      }
-      const nextBin = resolveNextBin(runRoot);
-      const next = spawn(
-        process.execPath,
-        [nextBin, 'dev', ...withBundlerFlag(passthrough)],
-        {
-          cwd: runRoot,
-          stdio: 'inherit',
-          env,
-          shell: process.platform === 'win32',
-        }
-      );
-
+      await run(process.execPath, [script, ...flags], { cwd: siteRoot, env });
+      shareReactTypes(siteRoot);
+      const watch = spawn(process.execPath, [path.join(__dirname, 'watch-content.mjs'), ...flags], {
+        cwd: siteRoot,
+        stdio: 'inherit',
+        env,
+      });
+      const next = spawn(process.execPath, [resolveNextBin(siteRoot), ...nextArgs('dev', passthrough)], {
+        cwd: siteRoot,
+        stdio: 'inherit',
+        env,
+      });
       const shutdown = () => {
-        watch?.kill();
+        watch.kill();
         next.kill();
       };
       process.on('SIGINT', shutdown);
       process.on('SIGTERM', shutdown);
-
-      await new Promise((resolve) => {
-        next.on('close', resolve);
-      });
+      await new Promise((resolve) => next.on('close', resolve));
+      watch.kill();
       break;
     }
 

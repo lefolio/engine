@@ -1,5 +1,6 @@
 import chokidar from 'chokidar';
 import { spawn } from 'child_process';
+import path from 'path';
 import { CONTENT_DIR, ENGINE_ROOT, contentEnv, vaultArgs } from './resolve-paths.mjs';
 
 let timer = null;
@@ -16,8 +17,8 @@ function syncArgs() {
 
 function runSync() {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', ['scripts/sync-content.mjs', ...syncArgs()], {
-      cwd: ENGINE_ROOT,
+    const child = spawn(process.execPath, [path.join(ENGINE_ROOT, 'scripts/sync-content.mjs'), ...syncArgs()], {
+      cwd: process.cwd(),
       stdio: 'inherit',
       env: contentEnv(),
     });

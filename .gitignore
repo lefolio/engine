@@ -4,6 +4,7 @@ out
 .content
 public/content-assets
 src/lib/content/content-version.ts
+scripts/.baseline
 .DS_Store
 *.local
 tsconfig.tsbuildinfo

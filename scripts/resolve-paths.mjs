@@ -5,12 +5,14 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const ENGINE_ROOT = path.join(__dirname, '..');
-export const MANIFEST_PATH = path.join(ENGINE_ROOT, '.content', 'manifest.json');
-export const ENGINE_META_PATH = path.join(ENGINE_ROOT, '.content', 'engine.json');
-export const SENTINEL_PATH = path.join(ENGINE_ROOT, 'src', 'lib', 'content', 'content-version.ts');
-export const PUBLIC_DIR = path.join(ENGINE_ROOT, 'public');
+/** The Next app. `lefolio` is always invoked from the site directory. */
+export const SITE_ROOT = process.cwd();
+export const MANIFEST_PATH = path.join(SITE_ROOT, '.content', 'manifest.json');
+export const ENGINE_META_PATH = path.join(SITE_ROOT, '.content', 'engine.json');
+export const SENTINEL_PATH = path.join(SITE_ROOT, '.content', 'content-version.ts');
+export const PUBLIC_DIR = path.join(SITE_ROOT, 'public');
 export const ASSETS_OUT = path.join(PUBLIC_DIR, 'content-assets');
-export const ENGINE_OUT = path.join(ENGINE_ROOT, 'out');
+export const SITE_OUT = path.join(SITE_ROOT, 'out');
 
 /**
  * Resolve content root from --content flag or LEFOLIO_CONTENT env.
@@ -89,61 +91,7 @@ export function contentEnv(argv = process.argv) {
   if (vaultFlag !== -1 && argv[vaultFlag + 1]) {
     env.LEFOLIO_VAULT = path.resolve(argv[vaultFlag + 1]);
   }
-  const templateRoot = resolveTemplateRoot(argv);
-  if (templateRoot) {
-    env.LEFOLIO_TEMPLATE_ROOT = templateRoot;
-  } else {
-    delete env.LEFOLIO_TEMPLATE_ROOT;
-  }
   return env;
-}
-
-/**
- * Find site-local template entry: `<dir>/src/index.ts` or `index.tsx`.
- */
-export function findTemplateEntry(dir) {
-  for (const name of ['index.ts', 'index.tsx']) {
-    const candidate = path.join(dir, 'src', name);
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-/**
- * Resolve site template root for local `./src` TemplateModule discovery.
- * Precedence: --template > LEFOLIO_TEMPLATE_ROOT > cwd when ./src/index.ts(x) exists.
- * Skips when cwd is the engine package itself (engine `src/` is the Next app).
- */
-export function resolveTemplateRoot(argv = process.argv) {
-  const flagIndex = argv.indexOf('--template');
-  if (flagIndex !== -1 && argv[flagIndex + 1]) {
-    return path.resolve(argv[flagIndex + 1]);
-  }
-  if (process.env.LEFOLIO_TEMPLATE_ROOT) {
-    return path.resolve(process.env.LEFOLIO_TEMPLATE_ROOT);
-  }
-
-  const cwd = path.resolve(process.cwd());
-  let engineReal;
-  try {
-    engineReal = fs.realpathSync(ENGINE_ROOT);
-  } catch {
-    engineReal = path.resolve(ENGINE_ROOT);
-  }
-  let cwdReal = cwd;
-  try {
-    cwdReal = fs.realpathSync(cwd);
-  } catch {
-    // keep cwd
-  }
-  if (cwdReal === engineReal) {
-    return null;
-  }
-
-  if (findTemplateEntry(cwd)) {
-    return cwd;
-  }
-  return null;
 }
 
 export function readEngineMeta() {
