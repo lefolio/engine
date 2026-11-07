@@ -32,6 +32,9 @@
   },
   "files": [
     "scripts",
+    "!scripts/.baseline",
+    "!scripts/.baseline/**",
+    "!scripts/**/*.test.mjs",
     "scaffold",
     "src",
     "!src/**/*.test.ts",
@@ -39,7 +42,8 @@
     "postcss.config.mjs",
     "tsconfig.json",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "AGENTS.md"
   ],
   "publishConfig": {
     "access": "public"
